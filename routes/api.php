@@ -1,36 +1,44 @@
 <?php
 
+use App\Http\Controllers\AuthController;
 use App\Http\Controllers\ArticleController;
 use App\Http\Controllers\AdminArticleController;
 use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
-| Public Routes (Bisa diakses oleh siapa saja tanpa login)
+| Public Routes
 |--------------------------------------------------------------------------
 */
-Route::get('/articles', [ArticleController::class, 'index']);          // Menampilkan semua artikel
-Route::get('/articles/popular', [ArticleController::class, 'popular']);  // Menampilkan artikel terpopuler
-Route::get('/articles/{id}', [ArticleController::class, 'show']);       // Menampilkan detail 1 artikel
+
+Route::post('/register', [AuthController::class, 'register']);
+Route::post('/login', [AuthController::class, 'login']);
+
+Route::get('/articles', [ArticleController::class, 'index']);
+Route::get('/articles/popular', [ArticleController::class, 'popular']);
+Route::get('/articles/search', [ArticleController::class, 'search']);
+Route::get('/articles/{id}', [ArticleController::class, 'show']);
 
 /*
 |--------------------------------------------------------------------------
-| Protected Routes (Wajib Login Terlebih Dahulu)
+| Protected Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth:sanctum')->group(function () {
-    
-    // Fitur Pembaca & Admin (Asalkan sudah login)
-    Route::post('/articles/{id}/like', [ArticleController::class, 'toggleLike']); // Tombol Like/Unlike
 
-    /*
-    |--------------------------------------------------------------------------
-    | Admin / Creator Only Routes (Hanya untuk User dengan role 'admin')
-    |--------------------------------------------------------------------------
-    */
+Route::middleware('auth:sanctum')->group(function () {
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::post('/articles/{id}/like', [ArticleController::class, 'toggleLike']);
+
     Route::middleware('role:admin')->prefix('admin')->group(function () {
-        Route::post('/articles', [AdminArticleController::class, 'store']);       // Membuat tulisan baru
-        Route::put('/articles/{id}', [AdminArticleController::class, 'update']);   // Mengubah tulisan
-        Route::delete('/articles/{id}', [AdminArticleController::class, 'destroy']); // Menghapus tulisan
+
+        Route::post('/articles', [AdminArticleController::class, 'store']);
+
+        Route::put('/articles/{id}', [AdminArticleController::class, 'update']);
+
+        Route::delete('/articles/{id}', [AdminArticleController::class, 'destroy']);
+
     });
+
 });

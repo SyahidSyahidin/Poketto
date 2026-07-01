@@ -8,21 +8,18 @@ use Illuminate\Http\Request;
 
 class ArticleController extends Controller
 {
-    // Menampilkan semua tulisan di beranda
     public function index()
     {
         $articles = Article::with('user')->withCount('likes')->latest()->get();
         return response()->json($articles);
     }
 
-    // Menampilkan detail satu tulisan saat diklik
     public function show($id)
     {
         $article = Article::with('user')->withCount('likes')->findOrFail($id);
         return response()->json($article);
     }
 
-    // Fitur Mengurutkan Tulisan dari Like Terbanyak (Halaman Popular)
     public function popular()
     {
         $popularArticles = Article::with('user')
@@ -33,12 +30,35 @@ class ArticleController extends Controller
         return response()->json($popularArticles);
     }
 
-    // Fitur Toggle Like (Jika belum like -> tambah, jika sudah -> hapus)
+    public function search(Request $request)
+    {
+        $keyword = $request->query('keyword');
+
+        $articles = Article::with('user')
+            ->withCount('likes')
+            ->where('title', 'like', '%' . $keyword . '%')
+            ->orWhere('content', 'like', '%' . $keyword . '%')
+            ->latest()
+            ->get();
+
+        return response()->json($articles);
+    }
+
     public function toggleLike($id)
     {
+        $article = Article::find($id);
+
+        if (!$article) {
+            return response()->json([
+                'message' => 'Artikel tidak ditemukan'
+            ], 404);
+        }
+
         $userId = auth()->id();
-        
-        $like = Like::where('user_id', $userId)->where('article_id', $id)->first();
+
+        $like = Like::where('user_id', $userId)
+            ->where('article_id', $id)
+            ->first();
 
         if ($like) {
             $like->delete();
